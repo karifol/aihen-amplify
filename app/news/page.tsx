@@ -3,7 +3,7 @@ import { articles } from "./data";
 
 export default function NewsPage() {
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
+    <div className="min-h-[calc(100vh-3.5rem)] bg-zinc-50 dark:bg-black">
       <div className="mx-auto max-w-3xl px-6 py-16">
         <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
           News
