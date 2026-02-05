@@ -31,7 +31,7 @@ export default function Header() {
       <div className="mx-auto flex h-14 max-w-5xl items-center px-6">
         <Link
           href="/"
-          className="mr-auto text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-50"
+          className="mr-auto text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50"
         >
           AIhen
         </Link>
@@ -52,7 +52,7 @@ export default function Header() {
           <div className="relative ml-6" ref={menuRef}>
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              className="rounded-full bg-zinc-900 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
+              className="rounded-full bg-zinc-900 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:cursor-pointer hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
             >
               {user.email}
             </button>

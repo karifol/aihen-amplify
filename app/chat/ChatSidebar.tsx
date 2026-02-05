@@ -23,7 +23,7 @@ export default function ChatSidebar({
       <div className="p-3">
         <button
           onClick={onNewChat}
-          className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:hover:bg-zinc-800"
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-zinc-900 transition-colors hover:cursor-pointer hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:hover:bg-zinc-800"
         >
           <svg
             className="h-4 w-4"
@@ -52,7 +52,7 @@ export default function ChatSidebar({
                 className={`w-full truncate rounded-lg px-3 py-2 pr-8 text-left text-sm transition-colors ${
                   activeSessionId === session.session_id
                     ? 'bg-zinc-200 font-medium text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50'
-                    : 'text-zinc-600 hover:bg-zinc-200/60 dark:text-zinc-400 dark:hover:bg-zinc-800/60'
+                    : 'text-zinc-600 hover:bg-zinc-200/60 dark:text-zinc-400 dark:hover:bg-zinc-800/60 hover:cursor-pointer'
                 }`}
               >
                 {session.first_message || 'New Chat'}
@@ -63,7 +63,7 @@ export default function ChatSidebar({
                     e.stopPropagation()
                     onDeleteSession(session.session_id)
                   }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-400 hover:bg-zinc-300 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-zinc-400 hover:cursor-pointer hover:bg-zinc-300 hover:text-zinc-700 dark:hover:bg-zinc-700 dark:hover:text-zinc-200"
                   title="削除"
                 >
                   <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

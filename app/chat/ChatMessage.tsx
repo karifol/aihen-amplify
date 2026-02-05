@@ -2,7 +2,51 @@
 
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Message } from '../lib/types'
+import { Message, Product } from '../lib/types'
+import SwipeableCardContainer from './SwipeableCardContainer'
+
+function extractBoothItems(message: Message): Product[] {
+  if (message.role !== 'assistant' || !message.toolResults) return []
+
+  const boothToolResult = message.toolResults.find(
+    (tr) => tr.tool_name === 'display_booth_items' || tr.tool_name === 'display_single_booth_item'
+  )
+  if (!boothToolResult?.result) return []
+
+  const result = boothToolResult.result
+  const items: Product[] = []
+
+  if (result._display_type === 'booth_items' && result.items) {
+    for (const item of result.items) {
+      items.push({
+        name: item.title || '',
+        subTitle: item.sub_title || '',
+        price: item.price || 0,
+        priceDisplay: item.price_display,
+        url: item.booth_url || '',
+        imageUrl: item.thumbnail_url || '',
+        category: item.category || '',
+        authorName: item.author_name || '',
+        likesCount: item.likes_count || 0,
+      })
+    }
+  } else if (result._display_type === 'booth_item_single' && result.item) {
+    const item = result.item
+    items.push({
+      name: item.title || '',
+      subTitle: item.sub_title || '',
+      price: item.price || 0,
+      priceDisplay: item.price_display,
+      url: item.booth_url || '',
+      imageUrl: item.thumbnail_url || '',
+      category: item.category || '',
+      authorName: item.author_name || '',
+      likesCount: item.likes_count || 0,
+    })
+  }
+
+  return items
+}
 
 const markdownComponents = {
   p: ({ children }: { children?: React.ReactNode }) => <p className="mb-2 last:mb-0">{children}</p>,
@@ -45,10 +89,12 @@ const markdownComponents = {
 }
 
 export default function ChatMessage({ message }: { message: Message }) {
+  const boothItems = extractBoothItems(message)
+
   if (message.role === 'user') {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
+        <div className="max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed bg-zinc-200 text-zinc-900 dark:bg-zinc-100 dark:text-zinc-900">
           {message.content}
         </div>
       </div>
@@ -57,12 +103,19 @@ export default function ChatMessage({ message }: { message: Message }) {
 
   return (
     <div className="flex justify-start">
-      <div className="max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50">
+      <div className="max-w-full px-4 py-3 text-sm leading-relaxed text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50">
         <div className="prose prose-sm max-w-none dark:prose-invert">
           <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
             {message.content}
           </ReactMarkdown>
         </div>
+
+        {boothItems.length > 0 && (
+          <div className="mt-4">
+            <div className="text-xs font-semibold text-gray-600 mb-2 dark:text-gray-400">商品一覧:</div>
+            <SwipeableCardContainer items={boothItems} />
+          </div>
+        )}
       </div>
     </div>
   )

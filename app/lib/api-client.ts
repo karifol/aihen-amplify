@@ -1,4 +1,4 @@
-import { ChatSession, HistoryEntry } from './types'
+import { ChatSession, HistoryEntry, ToolResult } from './types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || ''
@@ -21,6 +21,7 @@ export async function sendMessageStream(
   callbacks?: {
     onChunk?: (accumulatedContent: string) => void
     onSessionId?: (sessionId: string) => void
+    onToolResult?: (toolResult: ToolResult) => void
     onError?: (error: string) => void
   }
 ): Promise<string> {
@@ -77,6 +78,11 @@ export async function sendMessageStream(
           const content = typeof parsed.content === 'string' ? parsed.content : ''
           fullResponse += content
           callbacks?.onChunk?.(fullResponse)
+        } else if (parsed.type === 'tool_output') {
+          callbacks?.onToolResult?.({
+            tool_name: parsed.tool_name || parsed.data?.tool_name || 'unknown',
+            result: parsed.data || parsed.result,
+          })
         } else if (parsed.type === 'error') {
           const errorContent = typeof parsed.content === 'string' ? parsed.content : 'エラーが発生しました。'
           callbacks?.onError?.(errorContent)
@@ -99,6 +105,11 @@ export async function sendMessageStream(
       if (parsed.type === 'text') {
         fullResponse += typeof parsed.content === 'string' ? parsed.content : ''
         callbacks?.onChunk?.(fullResponse)
+      } else if (parsed.type === 'tool_output') {
+        callbacks?.onToolResult?.({
+          tool_name: parsed.tool_name || parsed.data?.tool_name || 'unknown',
+          result: parsed.data || parsed.result,
+        })
       } else if (parsed.type === 'error') {
         callbacks?.onError?.(typeof parsed.content === 'string' ? parsed.content : 'エラーが発生しました。')
       }

@@ -15,9 +15,31 @@ export interface HistoryEntry {
   timestamp?: number
 }
 
+/** ツール実行結果 */
+export interface ToolResult {
+  tool_name: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  result: any
+}
+
 /** クライアント側メッセージ表示用 */
 export interface Message {
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
+  toolResults?: ToolResult[]
+}
+
+/** 商品カード表示用 */
+export interface Product {
+  category?: string
+  name: string
+  subTitle?: string
+  price: number | string
+  priceDisplay?: string
+  tags?: string[]
+  imageUrl?: string
+  url?: string
+  authorName?: string
+  likesCount?: number
 }
