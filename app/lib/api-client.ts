@@ -1,6 +1,14 @@
 import { ChatSession, HistoryEntry } from './types'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY || ''
+
 const DEFAULT_USER_ID = 'user_default'
+
+const getHeaders = (): Record<string, string> => ({
+  'Content-Type': 'application/json',
+  'x-api-key': API_KEY,
+})
 
 /**
  * ストリーミングチャット送信
@@ -16,9 +24,9 @@ export async function sendMessageStream(
     onError?: (error: string) => void
   }
 ): Promise<string> {
-  const response = await fetch('/api/chat', {
+  const response = await fetch(`${API_URL}/v1/chat`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getHeaders(),
     body: JSON.stringify({
       message,
       session_id: sessionId || null,
@@ -107,7 +115,10 @@ export async function sendMessageStream(
  * セッション一覧取得
  */
 export async function listSessions(userId: string = DEFAULT_USER_ID): Promise<ChatSession[]> {
-  const response = await fetch(`/api/sessions?user_id=${encodeURIComponent(userId)}`)
+  const response = await fetch(
+    `${API_URL}/v1/sessions?user_id=${encodeURIComponent(userId)}&max_results=50`,
+    { headers: getHeaders() }
+  )
 
   if (!response.ok) {
     throw new Error(`Failed to list sessions: ${response.statusText}`)
@@ -121,7 +132,10 @@ export async function listSessions(userId: string = DEFAULT_USER_ID): Promise<Ch
  * セッション履歴取得
  */
 export async function getSessionHistory(sessionId: string): Promise<HistoryEntry[]> {
-  const response = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}/history`)
+  const response = await fetch(
+    `${API_URL}/v1/sessions/${encodeURIComponent(sessionId)}/history?max_results=100`,
+    { headers: getHeaders() }
+  )
 
   if (!response.ok) {
     throw new Error(`Failed to get session history: ${response.statusText}`)
@@ -135,9 +149,10 @@ export async function getSessionHistory(sessionId: string): Promise<HistoryEntry
  * セッション削除
  */
 export async function deleteSession(sessionId: string): Promise<void> {
-  const response = await fetch(`/api/sessions/${encodeURIComponent(sessionId)}`, {
-    method: 'DELETE',
-  })
+  const response = await fetch(
+    `${API_URL}/v1/sessions/${encodeURIComponent(sessionId)}`,
+    { method: 'DELETE', headers: getHeaders() }
+  )
 
   if (!response.ok) {
     throw new Error(`Failed to delete session: ${response.statusText}`)
