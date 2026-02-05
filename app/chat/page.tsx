@@ -10,8 +10,12 @@ import {
   getSessionHistory,
   deleteSession,
 } from '../lib/api-client'
+import { useAuth } from '../lib/auth-context'
 
 export default function ChatPage() {
+  const { user, userId } = useAuth()
+  const isLoggedIn = !!user
+
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -27,14 +31,17 @@ export default function ChatPage() {
     scrollToBottom()
   }, [messages])
 
-  // マウント時にセッション一覧を読み込み
+  // マウント時にセッション一覧を読み込み（ログイン時のみ）
   useEffect(() => {
-    loadSessions()
-  }, [])
+    if (isLoggedIn) {
+      loadSessions()
+    }
+  }, [isLoggedIn])
 
   const loadSessions = async () => {
+    if (!isLoggedIn) return
     try {
-      const data = await listSessions()
+      const data = await listSessions(userId)
       setSessions(data)
     } catch (error) {
       console.error('Failed to load sessions:', error)
@@ -126,7 +133,7 @@ export default function ChatPage() {
     try {
       let hasFirstChunk = false
 
-      await sendMessageStream(messageText, currentSessionId, 'user_default', {
+      await sendMessageStream(messageText, currentSessionId, userId, {
         onChunk: (accumulated) => {
           if (!hasFirstChunk) {
             hasFirstChunk = true
@@ -158,8 +165,10 @@ export default function ChatPage() {
         },
       })
 
-      // セッション一覧を再取得
-      await loadSessions()
+      // セッション一覧を再取得（ログイン時のみ）
+      if (isLoggedIn) {
+        await loadSessions()
+      }
     } catch (error) {
       console.error('Error:', error)
       setMessages((prev) => {
@@ -190,13 +199,15 @@ export default function ChatPage() {
 
   return (
     <div className="flex h-[calc(100vh-3.5rem)]">
-      <ChatSidebar
-        sessions={sessions}
-        activeSessionId={currentSessionId}
-        onSelectSession={handleSelectSession}
-        onNewChat={handleNewChat}
-        onDeleteSession={handleDeleteSession}
-      />
+      {isLoggedIn && (
+        <ChatSidebar
+          sessions={sessions}
+          activeSessionId={currentSessionId}
+          onSelectSession={handleSelectSession}
+          onNewChat={handleNewChat}
+          onDeleteSession={handleDeleteSession}
+        />
+      )}
 
       {/* Main Chat Area */}
       <div className="flex flex-1 flex-col bg-white dark:bg-black">

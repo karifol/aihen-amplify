@@ -1,21 +1,31 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "../lib/auth-context";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const { signup } = useAuth();
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     if (password !== confirmPassword) {
-      alert("パスワードが一致しません");
+      setError("パスワードが一致しません");
       return;
     }
-    // TODO: サインアップ処理を実装
-    console.log("signup", { email, password });
+    try {
+      await signup(email, password);
+      router.push("/chat");
+    } catch {
+      setError("アカウント作成に失敗しました。");
+    }
   };
 
   return (
@@ -32,6 +42,12 @@ export default function SignupPage() {
             新規アカウント作成
           </p>
         </div>
+
+        {error && (
+          <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
