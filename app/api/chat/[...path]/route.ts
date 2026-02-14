@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server'
 
+export const runtime = 'edge'
+
 const API_URL = 'https://lgz099nfc3.execute-api.ap-northeast-1.amazonaws.com/Prod'
 const API_KEY = '8YMHgTr2wF51SjAbYuuuM8dz8ngL4KZ98LGLaKVC'
 
@@ -32,18 +34,12 @@ async function proxyRequest(request: NextRequest, path: string): Promise<Respons
   const responseContentType = response.headers.get('content-type') || 'application/json'
   const isStreaming = responseContentType.includes('text/event-stream') || path === 'chat'
 
-  const responseHeaders: Record<string, string> = {
-    'content-type': isStreaming ? 'text/event-stream; charset=utf-8' : responseContentType,
-    'cache-control': 'no-cache, no-transform',
-    'connection': 'keep-alive',
-  }
-  if (isStreaming) {
-    responseHeaders['x-accel-buffering'] = 'no'
-  }
-
   return new Response(response.body, {
     status: response.status,
-    headers: responseHeaders,
+    headers: {
+      'content-type': isStreaming ? 'text/event-stream; charset=utf-8' : responseContentType,
+      'cache-control': 'no-cache, no-transform',
+    },
   })
 }
 
