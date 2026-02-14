@@ -14,15 +14,18 @@ interface ApiItem {
   comment: string
 }
 
-function getYesterday(): string {
+function getDefaultDate(): string {
   const now = new Date()
   const jst = new Date(now.getTime() + 9 * 60 * 60 * 1000)
-  jst.setUTCDate(jst.getUTCDate() - 1)
+  const jstHour = jst.getUTCHours()
+  // 5時前はまだ前日扱い → 「昨日」は2日前、5時以降は通常の昨日
+  const daysBack = jstHour < 5 ? 2 : 1
+  jst.setUTCDate(jst.getUTCDate() - daysBack)
   return jst.toISOString().split('T')[0]
 }
 
 export default function ItemPage() {
-  const [selectedDate, setSelectedDate] = useState(getYesterday())
+  const [selectedDate, setSelectedDate] = useState(getDefaultDate())
   const [items, setItems] = useState<ApiItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
