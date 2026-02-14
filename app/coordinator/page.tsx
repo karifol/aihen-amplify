@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect, ReactNode } from 'react'
 import { GiComb } from 'react-icons/gi'
 import { categories, CoordinatorResult } from './mock-data'
