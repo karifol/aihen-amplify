@@ -25,11 +25,11 @@ export default function ProductCard({
   return (
     <div className="w-full rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm hover:shadow-lg transition-shadow">
       {imageUrl ? (
-        <div className="h-64 bg-gray-200 overflow-hidden">
-          <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
+        <div className="bg-gray-200 overflow-hidden">
+          <img src={imageUrl} alt={name} className="w-full h-auto object-contain" />
         </div>
       ) : (
-        <div className="h-64 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+        <div className="aspect-square bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
           <span className="text-4xl text-gray-400">📦</span>
         </div>
       )}

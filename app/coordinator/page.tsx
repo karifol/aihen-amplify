@@ -2,7 +2,6 @@
 
 import { useState, useEffect, ReactNode } from 'react'
 import { GiComb } from 'react-icons/gi'
-import ProductCard from '../components/ProductCard'
 import { categories, CoordinatorResult } from './mock-data'
 import { RiTShirt2Line } from "react-icons/ri";
 import { PiPantsDuotone } from "react-icons/pi";
@@ -101,12 +100,12 @@ export default function CoordinatorPage() {
           )}
         </div>
 
-        {/* カテゴリ別ピック (2列グリッド) */}
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+        {/* カテゴリ別ピック (1列) */}
+        <div className="flex flex-col gap-8">
           {categories.map((cat) => {
             const pick = getPick(cat.label)
             return (
-              <section key={cat.label} className="flex flex-col">
+              <section key={cat.label}>
                 {/* 要素名 + アイコン */}
                 <div className="mb-3 flex items-center gap-2">
                   <span className="text-xl text-zinc-700 dark:text-zinc-300">{categoryIcons[cat.label]}</span>
@@ -116,30 +115,76 @@ export default function CoordinatorPage() {
                 </div>
 
                 {pick ? (
-                  <>
-                    {/* AIコメント */}
-                    <div className="mb-3 rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-900">
-                      <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
-                        {pick.reason}
-                      </p>
-                    </div>
+                  <div className="flex flex-col sm:flex-row gap-4 rounded-xl border border-zinc-200 bg-white overflow-hidden shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+                    {/* 画像 */}
+                    {pick.item.imageUrl ? (
+                      <div className="sm:w-48 sm:flex-shrink-0 overflow-hidden bg-zinc-200">
+                        <img src={pick.item.imageUrl} alt={pick.item.name} className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="sm:w-48 sm:flex-shrink-0 flex aspect-square sm:aspect-auto items-center justify-center bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-700">
+                        <span className="text-3xl">📦</span>
+                      </div>
+                    )}
 
-                    {/* アイテムカード */}
-                    <ProductCard
-                      category={pick.item.category}
-                      name={pick.item.name}
-                      price={pick.item.price}
-                      tags={pick.item.tags}
-                      imageUrl={pick.item.imageUrl}
-                      url={pick.item.url}
-                      authorName={pick.item.authorName}
-                    />
-                  </>
+                    {/* 情報 */}
+                    <div className="flex flex-1 flex-col p-4">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                          {pick.item.category}
+                        </span>
+                        <span className="ml-auto text-sm font-bold text-zinc-900 dark:text-zinc-50">
+                          {typeof pick.item.price === 'number'
+                            ? pick.item.price === 0 ? '無料' : `¥${pick.item.price.toLocaleString()}`
+                            : pick.item.price}
+                        </span>
+                      </div>
+
+                      <h3 className="mt-2 text-sm font-semibold leading-snug text-zinc-900 dark:text-zinc-50">
+                        {pick.item.name}
+                      </h3>
+
+                      {pick.item.authorName && (
+                        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                          by {pick.item.authorName}
+                        </p>
+                      )}
+
+                      {/* AIコメント */}
+                      <div className="mt-3 rounded-lg bg-zinc-50 px-3 py-2 dark:bg-zinc-800">
+                        <span className="mr-1 text-xs text-yellow-500">✦</span>
+                        <span className="text-xs leading-relaxed text-zinc-600 dark:text-zinc-300">
+                          {pick.reason}
+                        </span>
+                      </div>
+
+                      {pick.item.tags && pick.item.tags.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {pick.item.tags.map((tag, idx) => (
+                            <span key={idx} className="text-[11px] bg-zinc-100 text-zinc-600 px-2 py-0.5 rounded dark:bg-zinc-800 dark:text-zinc-400">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="mt-auto flex items-center justify-end pt-3">
+                        <a
+                          href={pick.item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-md bg-red-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-700"
+                        >
+                          BOOTH
+                        </a>
+                      </div>
+                    </div>
+                  </div>
                 ) : (
-                  <div className="flex h-40 items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
+                  <div className="flex h-24 items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
                     {isLoading ? (
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900 dark:border-zinc-600 dark:border-t-zinc-50" />
+                      <div className="flex items-center gap-2">
+                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900 dark:border-zinc-600 dark:border-t-zinc-50" />
                         <span className="text-sm text-zinc-400 dark:text-zinc-500">検索中...</span>
                       </div>
                     ) : (
