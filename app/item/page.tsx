@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 
 const API_URL = '/api/items'
-const API_KEY = process.env.NEXT_PUBLIC_ITEMS_API_KEY || ''
 
 interface ApiItem {
   link: string
@@ -35,9 +34,7 @@ export default function ItemPage() {
     setError(null)
     setCurrentPage(1) // 日付変更時にページをリセット
     try {
-      const res = await fetch(`${API_URL}/items?date=${date}`, {
-        headers: { 'x-api-key': API_KEY },
-      })
+      const res = await fetch(`${API_URL}/items?date=${date}`)
       if (res.status === 404) {
         setItems([])
         setError('NO DATA')

@@ -2,16 +2,11 @@ import { ChatSession, MessageEntry, ToolResult, UsageInfo } from './types'
 import type { CoordinatorResult } from '../coordinator/mock-data'
 
 const API_URL = '/api/chat'
-const API_KEY = process.env.NEXT_PUBLIC_API_KEY || ''
-
 const COORDINATOR_API_URL = '/api/coordinator'
-const COORDINATOR_API_KEY = process.env.NEXT_PUBLIC_COORDINATOR_API_KEY || ''
-
 const DEFAULT_USER_ID = 'user_default'
 
 const getHeaders = (): Record<string, string> => ({
   'Content-Type': 'application/json',
-  'x-api-key': API_KEY,
 })
 
 /**
@@ -227,7 +222,6 @@ export async function getCoordinate(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': COORDINATOR_API_KEY,
     },
     body: JSON.stringify({ user_id: userId }),
   })
@@ -250,7 +244,7 @@ export async function getLatestCoordinate(
     `${COORDINATOR_API_URL}/coordinate?user_id=${encodeURIComponent(userId)}`,
     {
       headers: {
-        'x-api-key': COORDINATOR_API_KEY,
+        'Content-Type': 'application/json',
       },
     },
   )
