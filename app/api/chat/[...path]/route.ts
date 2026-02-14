@@ -1,16 +1,18 @@
 import { NextRequest } from 'next/server'
 
-const API_URL = process.env.API_URL || ''
-const API_KEY = process.env.API_KEY || ''
-
 async function proxyRequest(request: NextRequest, path: string): Promise<Response> {
-  const url = new URL(`${API_URL}/${path}`)
+  const apiUrl = process.env.API_URL || ''
+  const apiKey = process.env.API_KEY || ''
+
+  console.log('[chat proxy]', { API_URL: apiUrl ? 'SET' : 'EMPTY', API_KEY: apiKey ? 'SET' : 'EMPTY', path })
+
+  const url = new URL(`${apiUrl}/${path}`)
   request.nextUrl.searchParams.forEach((value, key) => {
     url.searchParams.set(key, value)
   })
 
   const headers: Record<string, string> = {
-    'x-api-key': API_KEY,
+    'x-api-key': apiKey,
   }
   const contentType = request.headers.get('content-type')
   if (contentType) {
@@ -29,7 +31,6 @@ async function proxyRequest(request: NextRequest, path: string): Promise<Respons
 
   const response = await fetch(url.toString(), init)
 
-  // ストリーミングレスポンスをそのまま返す
   return new Response(response.body, {
     status: response.status,
     headers: {

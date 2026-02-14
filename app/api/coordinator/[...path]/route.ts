@@ -1,16 +1,16 @@
 import { NextRequest } from 'next/server'
 
-const API_URL = process.env.COORDINATOR_API_URL || ''
-const API_KEY = process.env.COORDINATOR_API_KEY || ''
-
 async function proxyRequest(request: NextRequest, path: string): Promise<Response> {
-  const url = new URL(`${API_URL}/${path}`)
+  const apiUrl = process.env.COORDINATOR_API_URL || ''
+  const apiKey = process.env.COORDINATOR_API_KEY || ''
+
+  const url = new URL(`${apiUrl}/${path}`)
   request.nextUrl.searchParams.forEach((value, key) => {
     url.searchParams.set(key, value)
   })
 
   const headers: Record<string, string> = {
-    'x-api-key': API_KEY,
+    'x-api-key': apiKey,
   }
   const contentType = request.headers.get('content-type')
   if (contentType) {
