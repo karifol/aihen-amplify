@@ -23,13 +23,13 @@ export default function ProductCard({
   authorName,
 }: ProductCardProps) {
   return (
-    <div className="w-full max-w-xs rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm hover:shadow-lg transition-shadow">
+    <div className="w-full rounded-2xl border border-gray-200 bg-white overflow-hidden shadow-sm hover:shadow-lg transition-shadow">
       {imageUrl ? (
-        <div className="h-48 bg-gray-200 overflow-hidden">
+        <div className="h-64 bg-gray-200 overflow-hidden">
           <img src={imageUrl} alt={name} className="w-full h-full object-cover" />
         </div>
       ) : (
-        <div className="h-48 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+        <div className="h-64 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
           <span className="text-4xl text-gray-400">📦</span>
         </div>
       )}
@@ -79,9 +79,9 @@ export default function ProductCard({
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-full block text-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition"
+          className="w-full block text-center px-4 py-2 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition"
         >
-          詳細を見る
+          BOOTH
         </a>
       </div>
     </div>

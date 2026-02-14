@@ -14,9 +14,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const SITE_URL = 'https://aihen.jp'
+
 export const metadata: Metadata = {
-  title: "AIhen",
-  description: "Your Personal AI Assistant",
+  metadataBase: new URL(SITE_URL),
+  title: 'AIhen - 改変サポートAI',
+  description: 'アバター改変をサポートするAIチャットボット',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/favicon.png',
+  },
+  openGraph: {
+    title: 'AIhen - 改変サポートAI',
+    description: 'アバター改変をサポートするAIチャットボット',
+    images: [{ url: '/ogp.png' }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AIhen - 改変サポートAI',
+    description: 'アバター改変をサポートするAIチャットボット',
+    images: ['/ogp.png'],
+  },
 };
 
 export default function RootLayout({
@@ -25,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ja">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

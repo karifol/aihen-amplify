@@ -18,8 +18,8 @@ export default function LoginPage() {
     try {
       await login(email, password);
       router.push("/chat");
-    } catch {
-      setError("ログインに失敗しました。");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "ログインに失敗しました。");
     }
   };
 

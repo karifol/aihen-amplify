@@ -55,7 +55,7 @@ export default function ChatSidebar({
                     : 'text-zinc-600 hover:bg-zinc-200/60 dark:text-zinc-400 dark:hover:bg-zinc-800/60 hover:cursor-pointer'
                 }`}
               >
-                {session.first_message || 'New Chat'}
+                {session.title || 'New Chat'}
               </button>
               {hoveredId === session.session_id && (
                 <button

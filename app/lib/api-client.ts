@@ -1,7 +1,11 @@
-import { ChatSession, HistoryEntry, ToolResult } from './types'
+import { ChatSession, MessageEntry, ToolResult, UsageInfo } from './types'
+import type { CoordinatorResult } from '../coordinator/mock-data'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || ''
+
+const COORDINATOR_API_URL = process.env.NEXT_PUBLIC_COORDINATOR_API_URL || ''
+const COORDINATOR_API_KEY = process.env.NEXT_PUBLIC_COORDINATOR_API_KEY || ''
 
 const DEFAULT_USER_ID = 'user_default'
 
@@ -12,7 +16,7 @@ const getHeaders = (): Record<string, string> => ({
 
 /**
  * ストリーミングチャット送信
- * NDJSON形式のレスポンスを解析し、コールバックで通知する
+ * SSE形式のレスポンスを解析し、コールバックで通知する
  */
 export async function sendMessageStream(
   message: string,
@@ -23,14 +27,18 @@ export async function sendMessageStream(
     onSessionId?: (sessionId: string) => void
     onToolResult?: (toolResult: ToolResult) => void
     onError?: (error: string) => void
+    onInfo?: (content: string) => void
   }
 ): Promise<string> {
-  const response = await fetch(`${API_URL}/v1/chat`, {
+  // セッションIDが未指定の場合はフロントで生成して渡す
+  const resolvedSessionId = sessionId || crypto.randomUUID()
+
+  const response = await fetch(`${API_URL}/chat`, {
     method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify({
       message,
-      session_id: sessionId || null,
+      session_id: resolvedSessionId,
       user_id: userId,
     }),
   })
@@ -39,10 +47,9 @@ export async function sendMessageStream(
     throw new Error(`Failed to send message: ${response.statusText}`)
   }
 
-  // セッションIDをヘッダーから取得
-  const newSessionId = response.headers.get('X-Session-Id')
-  if (newSessionId) {
-    callbacks?.onSessionId?.(newSessionId)
+  // 新規セッションの場合、セッションIDをコールバックで通知
+  if (!sessionId) {
+    callbacks?.onSessionId?.(resolvedSessionId)
   }
 
   const reader = response.body?.getReader()
@@ -53,6 +60,7 @@ export async function sendMessageStream(
   const decoder = new TextDecoder()
   let textBuffer = ''
   let fullResponse = ''
+
 
   while (true) {
     const { done, value } = await reader.read()
@@ -71,26 +79,35 @@ export async function sendMessageStream(
         continue
       }
 
-      try {
-        const parsed = JSON.parse(rawLine)
+      // SSE形式: "data: {...}" からJSONを抽出
+      const jsonStr = rawLine.startsWith('data: ') ? rawLine.slice(6) : rawLine
 
-        if (parsed.type === 'text') {
-          const content = typeof parsed.content === 'string' ? parsed.content : ''
-          fullResponse += content
+      try {
+        const parsed = JSON.parse(jsonStr)
+
+        if (parsed.type === 'content') {
+          const text = typeof parsed.text === 'string' ? parsed.text : ''
+          fullResponse += text
           callbacks?.onChunk?.(fullResponse)
-        } else if (parsed.type === 'tool_output') {
+        } else if (parsed.type === 'tool_result') {
+          let toolResultValue = parsed.result
+          if (typeof toolResultValue === 'string') {
+            try { toolResultValue = JSON.parse(toolResultValue) } catch { /* keep as string */ }
+          }
           callbacks?.onToolResult?.({
-            tool_name: parsed.tool_name || parsed.data?.tool_name || 'unknown',
-            result: parsed.data || parsed.result,
+            tool_name: parsed.tool || 'unknown',
+            result: toolResultValue,
           })
         } else if (parsed.type === 'error') {
-          const errorContent = typeof parsed.content === 'string' ? parsed.content : 'エラーが発生しました。'
+          const errorContent = typeof parsed.error === 'string' ? parsed.error : 'エラーが発生しました。'
           callbacks?.onError?.(errorContent)
+        } else if (parsed.type === 'info') {
+          const infoContent = typeof parsed.content === 'string' ? parsed.content : ''
+          callbacks?.onInfo?.(infoContent)
         }
+        // "tool_call" と "done" は特に処理不要
       } catch {
-        // JSONとして解釈できない場合はテキストとして扱う
-        fullResponse += rawLine
-        callbacks?.onChunk?.(fullResponse)
+        // JSONとして解釈できない場合は無視
       }
 
       newlineIndex = textBuffer.indexOf('\n')
@@ -100,22 +117,28 @@ export async function sendMessageStream(
   // 残ったバッファを処理
   const remaining = textBuffer.trim()
   if (remaining) {
+    const jsonStr = remaining.startsWith('data: ') ? remaining.slice(6) : remaining
     try {
-      const parsed = JSON.parse(remaining)
-      if (parsed.type === 'text') {
-        fullResponse += typeof parsed.content === 'string' ? parsed.content : ''
+      const parsed = JSON.parse(jsonStr)
+      if (parsed.type === 'content') {
+        fullResponse += typeof parsed.text === 'string' ? parsed.text : ''
         callbacks?.onChunk?.(fullResponse)
-      } else if (parsed.type === 'tool_output') {
+      } else if (parsed.type === 'tool_result') {
+        let toolResultValue = parsed.result
+        if (typeof toolResultValue === 'string') {
+          try { toolResultValue = JSON.parse(toolResultValue) } catch { /* keep as string */ }
+        }
         callbacks?.onToolResult?.({
-          tool_name: parsed.tool_name || parsed.data?.tool_name || 'unknown',
-          result: parsed.data || parsed.result,
+          tool_name: parsed.tool || 'unknown',
+          result: toolResultValue,
         })
       } else if (parsed.type === 'error') {
-        callbacks?.onError?.(typeof parsed.content === 'string' ? parsed.content : 'エラーが発生しました。')
+        callbacks?.onError?.(typeof parsed.error === 'string' ? parsed.error : 'エラーが発生しました。')
+      } else if (parsed.type === 'info') {
+        callbacks?.onInfo?.(typeof parsed.content === 'string' ? parsed.content : '')
       }
     } catch {
-      fullResponse += remaining
-      callbacks?.onChunk?.(fullResponse)
+      // 無視
     }
   }
 
@@ -127,7 +150,7 @@ export async function sendMessageStream(
  */
 export async function listSessions(userId: string = DEFAULT_USER_ID): Promise<ChatSession[]> {
   const response = await fetch(
-    `${API_URL}/v1/sessions?user_id=${encodeURIComponent(userId)}&max_results=50`,
+    `${API_URL}/sessions?user_id=${encodeURIComponent(userId)}`,
     { headers: getHeaders() }
   )
 
@@ -140,32 +163,101 @@ export async function listSessions(userId: string = DEFAULT_USER_ID): Promise<Ch
 }
 
 /**
- * セッション履歴取得
+ * セッションのメッセージ履歴取得
  */
-export async function getSessionHistory(sessionId: string): Promise<HistoryEntry[]> {
+export async function getSessionMessages(
+  sessionId: string,
+  userId: string = DEFAULT_USER_ID,
+): Promise<MessageEntry[]> {
   const response = await fetch(
-    `${API_URL}/v1/sessions/${encodeURIComponent(sessionId)}/history?max_results=100`,
+    `${API_URL}/sessions/${encodeURIComponent(sessionId)}/messages?user_id=${encodeURIComponent(userId)}`,
     { headers: getHeaders() }
   )
 
   if (!response.ok) {
-    throw new Error(`Failed to get session history: ${response.statusText}`)
+    throw new Error(`Failed to get session messages: ${response.statusText}`)
   }
 
   const data = await response.json()
-  return Array.isArray(data) ? data : (data.history || [])
+  return data.messages || []
 }
 
 /**
  * セッション削除
  */
-export async function deleteSession(sessionId: string): Promise<void> {
+export async function deleteSession(
+  sessionId: string,
+  userId: string = DEFAULT_USER_ID,
+): Promise<void> {
   const response = await fetch(
-    `${API_URL}/v1/sessions/${encodeURIComponent(sessionId)}`,
+    `${API_URL}/sessions/${encodeURIComponent(sessionId)}?user_id=${encodeURIComponent(userId)}`,
     { method: 'DELETE', headers: getHeaders() }
   )
 
   if (!response.ok) {
     throw new Error(`Failed to delete session: ${response.statusText}`)
   }
+}
+
+/**
+ * ユーザーの利用量と制限状態を取得（月間 + セッション内）
+ */
+export async function getUserUsage(userId: string = DEFAULT_USER_ID, sessionId?: string | null): Promise<UsageInfo> {
+  let url = `${API_URL}/users/${encodeURIComponent(userId)}/usage`
+  if (sessionId) {
+    url += `?session_id=${encodeURIComponent(sessionId)}`
+  }
+  const response = await fetch(url, { headers: getHeaders() })
+
+  if (!response.ok) {
+    throw new Error(`Failed to get usage: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * コーディネート取得
+ * ユーザーの会話履歴からAIが好みを分析し、4カテゴリのアイテムを提案する
+ */
+export async function getCoordinate(
+  userId: string = DEFAULT_USER_ID,
+): Promise<CoordinatorResult> {
+  const response = await fetch(`${COORDINATOR_API_URL}/coordinate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': COORDINATOR_API_KEY,
+    },
+    body: JSON.stringify({ user_id: userId }),
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.error || `Coordinator API error: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * 前回のコーディネート結果を取得
+ */
+export async function getLatestCoordinate(
+  userId: string = DEFAULT_USER_ID,
+): Promise<{ result: CoordinatorResult | null; generated_today: boolean }> {
+  const response = await fetch(
+    `${COORDINATOR_API_URL}/coordinate?user_id=${encodeURIComponent(userId)}`,
+    {
+      headers: {
+        'x-api-key': COORDINATOR_API_KEY,
+      },
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(`Failed to get latest coordinate: ${response.statusText}`)
+  }
+
+  return response.json()
 }

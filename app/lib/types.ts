@@ -1,18 +1,21 @@
 /** セッション一覧用 */
 export interface ChatSession {
   session_id: string
-  actor_id: string
-  created_at: string | number
-  first_message?: string
+  user_id: string
+  created_at: number
+  updated_at: number
+  title?: string
 }
 
-/** 履歴取得用 */
-export interface HistoryEntry {
-  type: 'user' | 'text' | 'tool_output'
-  content?: string
-  data?: unknown
-  tool_name?: string
-  timestamp?: number
+/** メッセージ履歴用 (バックエンドからのレスポンス) */
+export interface MessageEntry {
+  session_id: string
+  timestamp: number
+  message_id: string
+  role: 'user' | 'assistant'
+  content: string
+  user_id: string
+  tool_calls?: { tool_id: string; tool: string; result: string }[]
 }
 
 /** ツール実行結果 */
@@ -28,6 +31,18 @@ export interface Message {
   content: string
   timestamp: Date
   toolResults?: ToolResult[]
+}
+
+/** ユーザー利用量 */
+export interface UsageInfo {
+  user_id: string
+  month?: string
+  monthly_cost_yen?: number
+  monthly_limit_yen?: number
+  session_cost_yen?: number
+  session_limit_yen?: number | null
+  is_limited: boolean
+  error?: string
 }
 
 /** 商品カード表示用 */

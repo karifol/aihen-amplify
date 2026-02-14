@@ -6,14 +6,15 @@ import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../lib/auth-context";
 
 const navItems = [
-  { label: "Chat",    href: "/chat" },
-  { label: "Item",    href: "/item" },
-  { label: "News",    href: "/news" },
-  { label: "Contact", href: "/contact" },
+  { label: "Chat",      href: "/chat" },
+  { label: "Item",      href: "/item" },
+  { label: "Coordinator", href: "/coordinator" },
+  { label: "News",      href: "/news" },
+  { label: "Contact",   href: "/contact" },
 ];
 
 export default function Header() {
-  const { user, logout } = useAuth();
+  const { user, logout, deleteAccount } = useAuth();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -75,6 +76,17 @@ export default function Header() {
                   className="flex w-full items-center px-4 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 >
                   ログアウト
+                </button>
+                <button
+                  onClick={() => {
+                    if (window.confirm('本当にアカウントを削除しますか？この操作は取り消せません。')) {
+                      setMenuOpen(false);
+                      deleteAccount();
+                    }
+                  }}
+                  className="flex w-full items-center px-4 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
+                >
+                  アカウント削除
                 </button>
               </div>
             )}

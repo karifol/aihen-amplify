@@ -3,12 +3,13 @@
 import { useState, useRef, useEffect } from 'react'
 import ChatSidebar from './ChatSidebar'
 import ChatMessage from './ChatMessage'
-import { ChatSession, HistoryEntry, Message, ToolResult } from '../lib/types'
+import { ChatSession, MessageEntry, Message, ToolResult } from '../lib/types'
 import {
   sendMessageStream,
   listSessions,
-  getSessionHistory,
+  getSessionMessages,
   deleteSession,
+  getUserUsage,
 } from '../lib/api-client'
 import { useAuth } from '../lib/auth-context'
 
@@ -21,6 +22,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isLimited, setIsLimited] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -31,12 +33,22 @@ export default function ChatPage() {
     scrollToBottom()
   }, [messages])
 
-  // マウント時にセッション一覧を読み込み（ログイン時のみ）
+  // マウント時にセッション一覧と利用量を読み込み
   useEffect(() => {
     if (isLoggedIn) {
       loadSessions()
     }
+    checkUsageLimit()
   }, [isLoggedIn])
+
+  const checkUsageLimit = async (sessionId?: string | null) => {
+    try {
+      const usage = await getUserUsage(userId, sessionId ?? currentSessionId)
+      setIsLimited(usage.is_limited)
+    } catch (error) {
+      console.error('Failed to check usage limit:', error)
+    }
+  }
 
   const loadSessions = async () => {
     if (!isLoggedIn) return
@@ -52,63 +64,30 @@ export default function ChatPage() {
   const handleSelectSession = async (sessionId: string) => {
     setCurrentSessionId(sessionId)
     try {
-      const history = await getSessionHistory(sessionId)
-      const converted = convertHistoryToMessages(history)
+      const entries = await getSessionMessages(sessionId, userId)
+      const converted = convertMessagesToDisplay(entries)
       setMessages(converted)
     } catch (error) {
       console.error('Failed to load session history:', error)
     }
   }
 
-  // HistoryEntry[] → Message[] 変換
-  const convertHistoryToMessages = (history: HistoryEntry[]): Message[] => {
-    const result: Message[] = []
-    let currentAssistant: Message | null = null
-
-    for (const entry of history) {
-      if (entry.type === 'user') {
-        if (currentAssistant) {
-          result.push(currentAssistant)
-          currentAssistant = null
-        }
-        result.push({
-          role: 'user',
-          content: entry.content || '',
-          timestamp: new Date(),
-        })
-      } else if (entry.type === 'text') {
-        if (!currentAssistant) {
-          currentAssistant = {
-            role: 'assistant',
-            content: entry.content || '',
-            timestamp: new Date(),
-            toolResults: [],
-          }
-        } else {
-          currentAssistant.content = entry.content || ''
-        }
-      } else if (entry.type === 'tool_output') {
-        if (!currentAssistant) {
-          currentAssistant = {
-            role: 'assistant',
-            content: '',
-            timestamp: new Date(),
-            toolResults: [],
-          }
-        }
-        currentAssistant.toolResults = currentAssistant.toolResults || []
-        currentAssistant.toolResults.push({
-          tool_name: entry.tool_name || 'unknown',
-          result: entry.data,
-        })
+  // MessageEntry[] → Message[] 変換
+  const convertMessagesToDisplay = (entries: MessageEntry[]): Message[] => {
+    return entries.map((entry) => {
+      const msg: Message = {
+        role: entry.role,
+        content: entry.content,
+        timestamp: new Date(entry.timestamp),
       }
-    }
-
-    if (currentAssistant) {
-      result.push(currentAssistant)
-    }
-
-    return result
+      if (entry.role === 'assistant' && entry.tool_calls?.length) {
+        msg.toolResults = entry.tool_calls.map((tc) => ({
+          tool_name: tc.tool,
+          result: tc.result,
+        }))
+      }
+      return msg
+    })
   }
 
   const handleNewChat = () => {
@@ -118,7 +97,7 @@ export default function ChatPage() {
 
   const handleDeleteSession = async (sessionId: string) => {
     try {
-      await deleteSession(sessionId)
+      await deleteSession(sessionId, userId)
       setSessions((prev) => prev.filter((s) => s.session_id !== sessionId))
       if (currentSessionId === sessionId) {
         setCurrentSessionId(null)
@@ -149,6 +128,7 @@ export default function ChatPage() {
     try {
       let hasFirstChunk = false
       let collectedToolResults: ToolResult[] = []
+      let activeSessionId = currentSessionId
 
       await sendMessageStream(messageText, currentSessionId, userId, {
         onChunk: (accumulated) => {
@@ -167,6 +147,7 @@ export default function ChatPage() {
           })
         },
         onSessionId: (sessionId) => {
+          activeSessionId = sessionId
           setCurrentSessionId(sessionId)
         },
         onToolResult: (toolResult) => {
@@ -182,17 +163,47 @@ export default function ChatPage() {
         },
         onError: (errorMsg) => {
           setIsLoading(false)
-          setMessages((prev) => {
-            const updated = [...prev]
-            const last = updated[updated.length - 1]
-            updated[updated.length - 1] = {
-              ...last,
-              content: last.content ? `${last.content}\n\n${errorMsg}` : errorMsg,
-            }
-            return updated
-          })
+          if (errorMsg === 'monthly_limit_reached') {
+            setIsLimited(true)
+            setMessages((prev) => {
+              const updated = [...prev]
+              updated[updated.length - 1] = {
+                ...updated[updated.length - 1],
+                content: '今月の利用上限に達しました。来月までお待ちください。',
+              }
+              return updated
+            })
+          } else if (errorMsg === 'token_limit_reached') {
+            setIsLimited(true)
+            setMessages((prev) => {
+              const updated = [...prev]
+              updated[updated.length - 1] = {
+                ...updated[updated.length - 1],
+                content: '利用上限に達しました。ログインしてください。',
+              }
+              return updated
+            })
+          } else {
+            setMessages((prev) => {
+              const updated = [...prev]
+              const last = updated[updated.length - 1]
+              updated[updated.length - 1] = {
+                ...last,
+                content: last.content ? `${last.content}\n\n${errorMsg}` : errorMsg,
+              }
+              return updated
+            })
+          }
+        },
+        onInfo: (infoContent) => {
+          if (infoContent === 'token_limit_reached') {
+            setIsLimited(true)
+          }
         },
       })
+
+      // レスポンス完了後に利用制限を再チェック（activeSessionIdで最新のセッションIDを渡す）
+      await checkUsageLimit(activeSessionId)
 
       // セッション一覧を再取得（ログイン時のみ）
       if (isLoggedIn) {
@@ -215,14 +226,14 @@ export default function ChatPage() {
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || isLoading) return
+    if (!input.trim() || isLoading || isLimited) return
     const text = input.trim()
     setInput('')
     sendChatMessage(text)
   }
 
   const handleSuggestClick = (text: string) => {
-    if (isLoading) return
+    if (isLoading || isLimited) return
     sendChatMessage(text)
   }
 
@@ -265,6 +276,11 @@ export default function ChatPage() {
 
             {/* Input */}
             <div className="bg-white px-6 py-10 dark:border-zinc-800 dark:bg-black">
+              {isLimited && (
+                <div className="mx-auto mb-3 max-w-2xl rounded-lg bg-amber-50 px-4 py-3 text-center text-sm text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+                  {isLoggedIn ? '今月の利用上限に達しました。来月までお待ちください。' : '利用上限に達しました。ログインしてください。'}
+                </div>
+              )}
               <form
                 onSubmit={handleSend}
                 className="mx-auto flex max-w-2xl h-13 items-center rounded-full border border-zinc-300 focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-500 dark:focus-within:border-zinc-400 dark:focus-within:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-900"
@@ -273,13 +289,13 @@ export default function ChatPage() {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="メッセージを入力..."
+                  placeholder={isLimited ? '利用上限に達しています' : 'メッセージを入力...'}
                   className="flex-1 bg-transparent px-4 py-2.5 text-zinc-900 outline-none dark:text-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
-                  disabled={isLoading}
+                  disabled={isLoading || isLimited}
                 />
                 <button
                   type="submit"
-                  disabled={isLoading || !input.trim()}
+                  disabled={isLoading || isLimited || !input.trim()}
                   className="mr-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-white transition-colors hover:cursor-pointer hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -297,6 +313,12 @@ export default function ChatPage() {
                 AIhen <span className="text-blue-400 dark:text-zinc-600">AI</span>
               </h1>
 
+              {isLimited && (
+                <div className="mb-4 w-full rounded-lg bg-amber-50 px-4 py-3 text-center text-sm text-amber-700 dark:bg-amber-900/20 dark:text-amber-400">
+                  {isLoggedIn ? '今月の利用上限に達しました。来月までお待ちください。' : '利用上限に達しました。ログインしてください。'}
+                </div>
+              )}
+
               {/* Input */}
               <form
                 onSubmit={handleSend}
@@ -306,12 +328,13 @@ export default function ChatPage() {
                   type="text"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  placeholder="メッセージを入力..."
-                  className="flex-1 bg-transparent px-4 py-2.5 text-zinc-900 outline-none dark:text-zinc-50"
+                  placeholder={isLimited ? '利用上限に達しています' : 'メッセージを入力...'}
+                  className="flex-1 bg-transparent px-4 py-2.5 text-zinc-900 outline-none dark:text-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={isLimited}
                 />
                 <button
                   type="submit"
-                  disabled={!input.trim()}
+                  disabled={isLimited || !input.trim()}
                   className="mr-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-900 text-white transition-colors hover:cursor-pointer hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
                 >
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

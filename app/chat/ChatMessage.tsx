@@ -13,7 +13,10 @@ function extractBoothItems(message: Message): Product[] {
   )
   if (!boothToolResult?.result) return []
 
-  const result = boothToolResult.result
+  let result = boothToolResult.result
+  if (typeof result === 'string') {
+    try { result = JSON.parse(result) } catch { return [] }
+  }
   const items: Product[] = []
 
   if (result._display_type === 'booth_items' && result.items) {
