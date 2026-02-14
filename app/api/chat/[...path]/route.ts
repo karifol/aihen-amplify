@@ -1,18 +1,16 @@
 import { NextRequest } from 'next/server'
 
+const API_URL = 'https://lgz099nfc3.execute-api.ap-northeast-1.amazonaws.com/Prod'
+const API_KEY = '8YMHgTr2wF51SjAbYuuuM8dz8ngL4KZ98LGLaKVC'
+
 async function proxyRequest(request: NextRequest, path: string): Promise<Response> {
-  const apiUrl = process.env.API_URL || ''
-  const apiKey = process.env.API_KEY || ''
-
-  console.log('[chat proxy]', { API_URL: apiUrl ? 'SET' : 'EMPTY', API_KEY: apiKey ? 'SET' : 'EMPTY', path })
-
-  const url = new URL(`${apiUrl}/${path}`)
+  const url = new URL(`${API_URL}/${path}`)
   request.nextUrl.searchParams.forEach((value, key) => {
     url.searchParams.set(key, value)
   })
 
   const headers: Record<string, string> = {
-    'x-api-key': apiKey,
+    'x-api-key': API_KEY,
   }
   const contentType = request.headers.get('content-type')
   if (contentType) {
