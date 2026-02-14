@@ -9,10 +9,19 @@ export default function Home() {
         </h1>
         <p className="flex not-visited:max-w-md text-center text-3xl text-zinc-600 dark:text-zinc-400">
           K
-          <span className="text-blue-500 font-bold mx-0.5">AI</span>
-          HEN support AI
+          {/* <span className="text-blue-500 font-bold mx-0.5">AI</span> */}
+          AIHEN support AI
         </p>
       </main>
+      <p className="absolute bottom-8 text-sm text-zinc-400 dark:text-zinc-500">
+        powered by{" "}
+        <Link
+          href="/contact"
+          className="underline hover:text-zinc-600 dark:hover:text-zinc-300"
+        >
+          karifol
+        </Link>
+      </p>
     </div>
   );
 }
