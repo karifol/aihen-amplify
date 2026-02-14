@@ -5,6 +5,10 @@ const API_URL = '/api/chat'
 const COORDINATOR_API_URL = '/api/coordinator'
 const DEFAULT_USER_ID = 'user_default'
 
+// ストリーミング用: 直接API Gatewayを叩く（Amplifyがバッファリングするため）
+const STREAMING_API_URL = process.env.NEXT_PUBLIC_STREAMING_API_URL || ''
+const STREAMING_API_KEY = process.env.NEXT_PUBLIC_STREAMING_API_KEY || ''
+
 const getHeaders = (): Record<string, string> => ({
   'Content-Type': 'application/json',
 })
@@ -28,9 +32,12 @@ export async function sendMessageStream(
   // セッションIDが未指定の場合はフロントで生成して渡す
   const resolvedSessionId = sessionId || crypto.randomUUID()
 
-  const response = await fetch(`${API_URL}/chat`, {
+  const response = await fetch(`${STREAMING_API_URL}/chat`, {
     method: 'POST',
-    headers: getHeaders(),
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': STREAMING_API_KEY,
+    },
     body: JSON.stringify({
       message,
       session_id: resolvedSessionId,
