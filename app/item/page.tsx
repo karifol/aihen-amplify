@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 
-const API_URL = 'https://poqzffs5v8.execute-api.ap-northeast-1.amazonaws.com/prod'
-const API_KEY = 'EGy2fdcoi34GJXLuO3HZp4JFBPm1X8fH9iCElNVq'
+const API_URL = '/api/items'
+const API_KEY = process.env.NEXT_PUBLIC_ITEMS_API_KEY || ''
 
 interface ApiItem {
   link: string

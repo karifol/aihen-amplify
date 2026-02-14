@@ -1,10 +1,10 @@
 import { ChatSession, MessageEntry, ToolResult, UsageInfo } from './types'
 import type { CoordinatorResult } from '../coordinator/mock-data'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
+const API_URL = '/api/chat'
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || ''
 
-const COORDINATOR_API_URL = process.env.NEXT_PUBLIC_COORDINATOR_API_URL || ''
+const COORDINATOR_API_URL = '/api/coordinator'
 const COORDINATOR_API_KEY = process.env.NEXT_PUBLIC_COORDINATOR_API_KEY || ''
 
 const DEFAULT_USER_ID = 'user_default'
