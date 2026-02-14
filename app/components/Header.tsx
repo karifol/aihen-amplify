@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
+import { HiSun, HiMoon } from "react-icons/hi";
 import { useAuth } from "../lib/auth-context";
+import { useTheme } from "../lib/theme-context";
 
 const navItems = [
   { label: "Chat",      href: "/chat" },
@@ -15,6 +17,7 @@ const navItems = [
 
 export default function Header() {
   const { user, logout, deleteAccount } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -57,6 +60,14 @@ export default function Header() {
             );
           })}
         </nav>
+
+        <button
+          onClick={toggleTheme}
+          className="ml-4 rounded-full p-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
+          aria-label="テーマ切り替え"
+        >
+          {theme === 'dark' ? <HiSun size={18} /> : <HiMoon size={18} />}
+        </button>
 
         {user ? (
           <div className="relative ml-6" ref={menuRef}>

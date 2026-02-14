@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import ChatSidebar from './ChatSidebar'
 import ChatMessage from './ChatMessage'
 import { ChatSession, MessageEntry, Message, ToolResult } from '../lib/types'
@@ -16,6 +17,8 @@ import { useAuth } from '../lib/auth-context'
 export default function ChatPage() {
   const { user, userId } = useAuth()
   const isLoggedIn = !!user
+  const searchParams = useSearchParams()
+  const router = useRouter()
 
   const [sessions, setSessions] = useState<ChatSession[]>([])
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
@@ -23,6 +26,7 @@ export default function ChatPage() {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isLimited, setIsLimited] = useState(false)
+  const initialMessageSent = useRef(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -40,6 +44,16 @@ export default function ChatPage() {
     }
     checkUsageLimit()
   }, [isLoggedIn])
+
+  // トップページからのクエリパラメータで自動送信
+  useEffect(() => {
+    const q = searchParams.get('q')
+    if (q && !initialMessageSent.current) {
+      initialMessageSent.current = true
+      router.replace('/chat', { scroll: false })
+      sendChatMessage(q)
+    }
+  }, [searchParams])
 
   const checkUsageLimit = async (sessionId?: string | null) => {
     try {
@@ -262,7 +276,7 @@ export default function ChatPage() {
 
                 {isLoading && (
                   <div className="flex justify-start">
-                    <div className="flex space-x-1.5 px-4 py-3 dark:bg-zinc-800">
+                    <div className="flex space-x-1.5 px-4 py-3">
                       <div className="h-2 w-2 animate-bounce rounded-full bg-zinc-400" />
                       <div className="h-2 w-2 animate-bounce rounded-full bg-zinc-400" style={{ animationDelay: '0.2s' }} />
                       <div className="h-2 w-2 animate-bounce rounded-full bg-zinc-400" style={{ animationDelay: '0.4s' }} />

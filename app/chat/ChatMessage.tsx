@@ -106,7 +106,7 @@ export default function ChatMessage({ message }: { message: Message }) {
 
   return (
     <div className="flex justify-start">
-      <div className="max-w-full px-4 py-3 text-sm leading-relaxed text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50">
+      <div className="max-w-full px-4 py-3 text-sm leading-relaxed text-zinc-900 dark:bg-black dark:text-zinc-50">
         <div className="prose prose-sm max-w-none dark:prose-invert">
           <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
             {message.content}
