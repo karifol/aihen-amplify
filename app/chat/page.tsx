@@ -11,6 +11,7 @@ import {
   sendMessageStream,
   listSessions,
   getSessionMessages,
+  deleteSession,
   getUserUsage,
 } from '../lib/api-client'
 import { useAuth } from '../lib/auth-context'
@@ -112,6 +113,19 @@ export default function ChatPage() {
   const handleNewChat = () => {
     setCurrentSessionId(null)
     setMessages([])
+  }
+
+  const handleDeleteSession = async (sessionId: string) => {
+    try {
+      await deleteSession(sessionId, userId)
+      setSessions((prev) => prev.filter((s) => s.session_id !== sessionId))
+      if (currentSessionId === sessionId) {
+        setCurrentSessionId(null)
+        setMessages([])
+      }
+    } catch (error) {
+      console.error('Failed to delete session:', error)
+    }
   }
 
   const sendChatMessage = async (messageText: string) => {
@@ -252,6 +266,7 @@ export default function ChatPage() {
           isLoading={isLoadingSessions}
           onSelectSession={handleSelectSession}
           onNewChat={handleNewChat}
+          onDeleteSession={handleDeleteSession}
         />
       )}
 
@@ -267,13 +282,18 @@ export default function ChatPage() {
                 ))}
 
                 {isLoading && (
-                  <div className="flex justify-start">
-                    <div className="flex space-x-1.5 px-4 py-3">
-                      <div className="h-2 w-2 animate-bounce rounded-full bg-zinc-400" />
-                      <div className="h-2 w-2 animate-bounce rounded-full bg-zinc-400" style={{ animationDelay: '0.2s' }} />
-                      <div className="h-2 w-2 animate-bounce rounded-full bg-zinc-400" style={{ animationDelay: '0.4s' }} />
+                  <>
+                    <style>{`
+                      @keyframes pw1 { 0%,100%{width:80%} 50%{width:50%} }
+                      @keyframes pw2 { 0%,100%{width:60%} 50%{width:85%} }
+                      @keyframes pw3 { 0%,100%{width:40%} 50%{width:65%} }
+                    `}</style>
+                    <div className="flex flex-col gap-2 px-4">
+                      <div className="h-4 rounded-lg bg-zinc-200 dark:bg-zinc-800" style={{ animation: 'pw1 1.8s ease-in-out infinite' }} />
+                      <div className="h-4 rounded-lg bg-zinc-200 dark:bg-zinc-800" style={{ animation: 'pw2 1.8s ease-in-out infinite' }} />
+                      <div className="h-4 rounded-lg bg-zinc-200 dark:bg-zinc-800" style={{ animation: 'pw3 1.8s ease-in-out infinite' }} />
                     </div>
-                  </div>
+                  </>
                 )}
 
                 <div ref={messagesEndRef} />
