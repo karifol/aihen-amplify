@@ -11,7 +11,6 @@ import {
   sendMessageStream,
   listSessions,
   getSessionMessages,
-  deleteSession,
   getUserUsage,
 } from '../lib/api-client'
 import { useAuth } from '../lib/auth-context'
@@ -113,19 +112,6 @@ export default function ChatPage() {
   const handleNewChat = () => {
     setCurrentSessionId(null)
     setMessages([])
-  }
-
-  const handleDeleteSession = async (sessionId: string) => {
-    try {
-      await deleteSession(sessionId, userId)
-      setSessions((prev) => prev.filter((s) => s.session_id !== sessionId))
-      if (currentSessionId === sessionId) {
-        setCurrentSessionId(null)
-        setMessages([])
-      }
-    } catch (error) {
-      console.error('Failed to delete session:', error)
-    }
   }
 
   const sendChatMessage = async (messageText: string) => {
@@ -266,7 +252,6 @@ export default function ChatPage() {
           isLoading={isLoadingSessions}
           onSelectSession={handleSelectSession}
           onNewChat={handleNewChat}
-          onDeleteSession={handleDeleteSession}
         />
       )}
 
