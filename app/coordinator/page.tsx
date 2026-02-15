@@ -21,6 +21,7 @@ const categoryIcons: Record<string, ReactNode> = {
 export default function CoordinatorPage() {
   const [result, setResult] = useState<CoordinatorResult | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingPrev, setIsLoadingPrev] = useState(false)
   const [generatedToday, setGeneratedToday] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { user, userId, isLoading: authLoading } = useAuth()
@@ -29,12 +30,14 @@ export default function CoordinatorPage() {
   // ページ表示時に前回結果を取得（ログイン済みユーザーのみ）
   useEffect(() => {
     if (authLoading || !isLoggedIn) return
+    setIsLoadingPrev(true)
     getLatestCoordinate(userId)
       .then(({ result: prev, generated_today }) => {
         if (prev) setResult(prev)
         setGeneratedToday(generated_today)
       })
       .catch(() => {})
+      .finally(() => setIsLoadingPrev(false))
   }, [userId, authLoading])
 
   const handleStart = async () => {
@@ -90,10 +93,10 @@ export default function CoordinatorPage() {
             <p className="text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">
               {result.preference}
             </p>
-          ) : isLoading ? (
+          ) : isLoading || isLoadingPrev ? (
             <div className="flex items-center gap-2">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900 dark:border-zinc-600 dark:border-t-zinc-50" />
-              <span className="text-sm text-zinc-400 dark:text-zinc-500">分析中...</span>
+              <span className="text-sm text-zinc-400 dark:text-zinc-500">{isLoading ? '分析中...' : '読み込み中...'}</span>
             </div>
           ) : (
             <p className="text-sm text-zinc-400 dark:text-zinc-500">
@@ -184,10 +187,10 @@ export default function CoordinatorPage() {
                   </div>
                 ) : (
                   <div className="flex h-24 items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
-                    {isLoading ? (
+                    {isLoading || isLoadingPrev ? (
                       <div className="flex items-center gap-2">
                         <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900 dark:border-zinc-600 dark:border-t-zinc-50" />
-                        <span className="text-sm text-zinc-400 dark:text-zinc-500">検索中...</span>
+                        <span className="text-sm text-zinc-400 dark:text-zinc-500">{isLoading ? '検索中...' : '読み込み中...'}</span>
                       </div>
                     ) : (
                       <span className="text-sm text-zinc-400 dark:text-zinc-500">

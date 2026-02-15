@@ -28,6 +28,7 @@ export default function ChatPage() {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [isLimited, setIsLimited] = useState(false)
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false)
   const initialMessageSent = useRef(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -68,11 +69,14 @@ export default function ChatPage() {
 
   const loadSessions = async () => {
     if (!isLoggedIn) return
+    setIsLoadingSessions(true)
     try {
       const data = await listSessions(userId)
       setSessions(data)
     } catch (error) {
       console.error('Failed to load sessions:', error)
+    } finally {
+      setIsLoadingSessions(false)
     }
   }
 
@@ -259,6 +263,7 @@ export default function ChatPage() {
         <ChatSidebar
           sessions={sessions}
           activeSessionId={currentSessionId}
+          isLoading={isLoadingSessions}
           onSelectSession={handleSelectSession}
           onNewChat={handleNewChat}
           onDeleteSession={handleDeleteSession}

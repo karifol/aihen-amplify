@@ -6,12 +6,14 @@ import { ChatSession } from '../lib/types'
 export default function ChatSidebar({
   sessions,
   activeSessionId,
+  isLoading,
   onSelectSession,
   onNewChat,
   onDeleteSession,
 }: {
   sessions: ChatSession[]
   activeSessionId: string | null
+  isLoading: boolean
   onSelectSession: (id: string) => void
   onNewChat: () => void
   onDeleteSession: (id: string) => void
@@ -39,6 +41,16 @@ export default function ChatSidebar({
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 pb-3">
+        {isLoading && sessions.length === 0 ? (
+          <div className="flex flex-col gap-2 px-3 pt-2">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="h-8 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800"
+              />
+            ))}
+          </div>
+        ) : (
         <ul className="flex flex-col gap-0.5">
           {sessions.map((session) => (
             <li
@@ -74,6 +86,7 @@ export default function ChatSidebar({
             </li>
           ))}
         </ul>
+        )}
       </nav>
     </aside>
   )
