@@ -4,6 +4,10 @@ const API_URL = process.env.GENERATE_IMAGE_API_URL || ''
 const API_KEY = process.env.GENERATE_IMAGE_API_KEY || ''
 
 async function proxyRequest(request: NextRequest, path: string): Promise<Response> {
+  if (!API_URL) {
+    return Response.json({ error: 'GENERATE_IMAGE_API_URL is not configured' }, { status: 500 })
+  }
+
   const url = new URL(`${API_URL}/${path}`)
   request.nextUrl.searchParams.forEach((value, key) => {
     url.searchParams.set(key, value)
@@ -11,30 +15,25 @@ async function proxyRequest(request: NextRequest, path: string): Promise<Respons
 
   const headers: Record<string, string> = {
     'x-api-key': API_KEY,
-  }
-  const contentType = request.headers.get('content-type')
-  if (contentType) {
-    headers['content-type'] = contentType
+    'content-type': 'application/json',
   }
 
-  const init: RequestInit = {
-    method: request.method,
-    headers,
-  }
+  const init: RequestInit = { method: request.method, headers }
   if (request.method !== 'GET' && request.method !== 'HEAD') {
-    init.body = request.body
-    // @ts-expect-error duplex is required for streaming request body
-    init.duplex = 'half'
+    init.body = await request.text()
   }
 
-  const response = await fetch(url.toString(), init)
-
-  return new Response(response.body, {
-    status: response.status,
-    headers: {
-      'content-type': response.headers.get('content-type') || 'application/json',
-    },
-  })
+  try {
+    const response = await fetch(url.toString(), init)
+    const body = await response.text()
+    return new Response(body, {
+      status: response.status,
+      headers: { 'content-type': 'application/json' },
+    })
+  } catch (e) {
+    console.error('proxy error:', e)
+    return Response.json({ error: 'Upstream request failed' }, { status: 502 })
+  }
 }
 
 export async function GET(
