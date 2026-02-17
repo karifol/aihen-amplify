@@ -4,8 +4,8 @@ import type { GeneratedImageMeta } from '../../../lib/types'
 import { extractCoordinateId } from '../utils'
 import DetailView from './detail-view'
 
-const API_URL = process.env.GENERATE_IMAGE_API_URL || ''
-const API_KEY = process.env.GENERATE_IMAGE_API_KEY || ''
+const API_URL = 'https://pskgdhik95.execute-api.ap-northeast-1.amazonaws.com/Prod'
+const API_KEY = 'oYfue6ET7d770SPUSQ06NacbJPRz1R3N7LU2RgQO'
 
 async function fetchImageById(id: string): Promise<GeneratedImageMeta | null> {
   try {

@@ -1,13 +1,9 @@
 import { NextRequest } from 'next/server'
 
-const API_URL = process.env.GENERATE_IMAGE_API_URL || ''
-const API_KEY = process.env.GENERATE_IMAGE_API_KEY || ''
+const API_URL = 'https://pskgdhik95.execute-api.ap-northeast-1.amazonaws.com/Prod'
+const API_KEY = 'oYfue6ET7d770SPUSQ06NacbJPRz1R3N7LU2RgQO'
 
 async function proxyRequest(request: NextRequest, path: string): Promise<Response> {
-  if (!API_URL) {
-    return Response.json({ error: 'GENERATE_IMAGE_API_URL is not configured' }, { status: 500 })
-  }
-
   const url = new URL(`${API_URL}/${path}`)
   request.nextUrl.searchParams.forEach((value, key) => {
     url.searchParams.set(key, value)

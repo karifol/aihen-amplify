@@ -1,13 +1,9 @@
 import { NextRequest } from 'next/server'
 
-const API_URL = process.env.QUERY_ITEM_API_URL || ''
-const API_KEY = process.env.QUERY_ITEM_API_KEY || ''
+const API_URL = 'https://2mzl3ghifd.execute-api.ap-northeast-1.amazonaws.com/Prod'
+const API_KEY = 'J5s4d4NEPg9SaXVf4tIHB11yyAa9r7Wa7pSBc5jJ'
 
 async function proxyRequest(request: NextRequest, path: string): Promise<Response> {
-  if (!API_URL) {
-    return Response.json({ error: 'QUERY_ITEM_API_URL is not configured' }, { status: 500 })
-  }
-
   const url = new URL(`${API_URL}/${path}`)
   request.nextUrl.searchParams.forEach((value, key) => {
     url.searchParams.set(key, value)
