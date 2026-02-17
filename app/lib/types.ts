@@ -58,3 +58,18 @@ export interface Product {
   authorName?: string
   likesCount?: number
 }
+
+/** アイテム検索APIレスポンス */
+export interface QueryItemResponse {
+  keywords: Record<string, string[]>
+  candidates: Record<string, Product[]>
+}
+
+/** 生成画像メタデータ */
+export interface GeneratedImageMeta {
+  image_url: string
+  avatar_name: string
+  ai_image_url?: string
+  items: Record<string, { name: string; imageUrl?: string }>
+  preference_text?: string
+}

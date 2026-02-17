@@ -1,8 +1,10 @@
-import { ChatSession, MessageEntry, ToolResult, UsageInfo } from './types'
+import { ChatSession, MessageEntry, ToolResult, UsageInfo, QueryItemResponse, GeneratedImageMeta } from './types'
 import type { CoordinatorResult } from '../coordinator/mock-data'
 
 const API_URL = '/api/chat'
 const COORDINATOR_API_URL = '/api/coordinator'
+const QUERY_ITEM_API_URL = '/api/query-item'
+const GENERATE_IMAGE_API_URL = '/api/generate-image'
 const DEFAULT_USER_ID = 'user_default'
 
 // ストリーミング用: 直接API Gatewayを叩く（Amplifyがバッファリングするため）
@@ -261,4 +263,77 @@ export async function getLatestCoordinate(
   }
 
   return response.json()
+}
+
+/**
+ * アイテム検索
+ * アバター名と好みテキストからカテゴリ別の候補アイテムを取得する
+ */
+export async function queryItems(
+  avatarName: string,
+  preferenceText: string,
+  avatarId?: string,
+): Promise<QueryItemResponse> {
+  const response = await fetch(`${QUERY_ITEM_API_URL}/query_item`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+      avatar_name: avatarName,
+      avatar_id: avatarId,
+      preference_text: preferenceText,
+    }),
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.error || `Query item API error: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * 画像生成
+ * 選択したアイテム情報からコーディネート画像を生成する
+ */
+export async function generateImage(
+  avatarName: string,
+  items: Record<string, { name: string; imageUrl?: string }>,
+  preferenceText?: string,
+  aiImageUrl?: string,
+): Promise<{ image_url: string }> {
+  const response = await fetch(`${GENERATE_IMAGE_API_URL}/generate_image`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+      avatar_name: avatarName,
+      ai_image_url: aiImageUrl,
+      items,
+      preference_text: preferenceText,
+    }),
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.error || `Generate image API error: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * 生成済み画像メタデータ一覧を取得
+ */
+export async function listGeneratedImages(limit = 20): Promise<GeneratedImageMeta[]> {
+  const response = await fetch(`${GENERATE_IMAGE_API_URL}/images?limit=${limit}`, {
+    headers: getHeaders(),
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.error || `List images API error: ${response.statusText}`)
+  }
+
+  const data = await response.json()
+  return data.images
 }
