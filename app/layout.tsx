@@ -49,6 +49,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
+          <div className="fixed inset-0 z-100 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center gap-4 text-white">
+            <div className="text-5xl">🚫</div>
+            <div className="text-2xl font-bold">現在サービスを停止しています</div>
+            <div className="text-sm text-white/70">ご不便をおかけして申し訳ありません</div>
+          </div>
           <Header />
           <div className="pt-14">{children}</div>
         </Providers>
