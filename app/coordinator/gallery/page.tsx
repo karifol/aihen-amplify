@@ -3,20 +3,24 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { listGeneratedImages } from '../../lib/api-client'
+import { useAuth } from '../../lib/auth-context'
 import type { GeneratedImageMeta } from '../../lib/types'
+import { coordinateImageSrc } from '../../lib/types'
 import { extractCoordinateId } from './utils'
 
 export default function GalleryPage() {
+  const { user, isLoading: authLoading } = useAuth()
   const [images, setImages] = useState<GeneratedImageMeta[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    listGeneratedImages(50)
+    if (authLoading) return
+    listGeneratedImages(50, user?.email ?? undefined)
       .then(setImages)
       .catch((e) => setError(e instanceof Error ? e.message : 'エラーが発生しました'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [authLoading, user?.email])
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
@@ -59,7 +63,7 @@ export default function GalleryPage() {
           ) : (
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               {images.map((img) => {
-                const id = extractCoordinateId(img.image_url)
+                const id = extractCoordinateId(img.image_key ?? img.image_url ?? '')
                 const itemNames = Object.values(img.items)
                   .map((i) => i.name)
                   .join(', ')
@@ -71,7 +75,7 @@ export default function GalleryPage() {
                   >
                     <div className="aspect-9/16 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
                       <img
-                        src={img.image_url}
+                        src={coordinateImageSrc(img)}
                         alt={`${img.avatar_name} コーディネート`}
                         className="h-full w-full object-cover transition-transform group-hover:scale-105"
                       />

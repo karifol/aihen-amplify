@@ -21,8 +21,19 @@ async function proxyRequest(request: NextRequest, path: string): Promise<Respons
 
   try {
     const response = await fetch(url.toString(), init)
-    const body = await response.text()
-    return new Response(body, {
+    const text = await response.text()
+    let json: Record<string, unknown> | null = null
+    try { json = JSON.parse(text) } catch { /* not JSON */ }
+
+    if (json && typeof json.image_b64 === 'string') {
+      const binary = Buffer.from(json.image_b64, 'base64')
+      return new Response(binary, {
+        status: response.status,
+        headers: { 'content-type': 'image/png', 'cache-control': 'private, max-age=3600' },
+      })
+    }
+
+    return new Response(text, {
       status: response.status,
       headers: { 'content-type': 'application/json' },
     })

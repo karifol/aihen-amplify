@@ -67,9 +67,18 @@ export interface QueryItemResponse {
 
 /** 生成画像メタデータ */
 export interface GeneratedImageMeta {
-  image_url: string
+  image_key?: string   // S3キー（新形式）
+  image_url?: string   // 旧形式互換
   avatar_name: string
   ai_image_url?: string
   items: Record<string, { name: string; imageUrl?: string }>
   preference_text?: string
+}
+
+/** image_key から Next.js プロキシ経由の画像 URL を構築 */
+export function coordinateImageSrc(item: GeneratedImageMeta): string {
+  if (item.image_key) {
+    return `/api/generate-image/image?key=${encodeURIComponent(item.image_key)}`
+  }
+  return item.image_url ?? ''
 }

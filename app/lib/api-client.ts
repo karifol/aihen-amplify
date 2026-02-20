@@ -301,7 +301,8 @@ export async function generateImage(
   items: Record<string, { name: string; imageUrl?: string }>,
   preferenceText?: string,
   aiImageUrl?: string,
-): Promise<{ image_url: string }> {
+  userId?: string,
+): Promise<{ image_key: string }> {
   const response = await fetch(`${GENERATE_IMAGE_API_URL}/generate_image`, {
     method: 'POST',
     headers: getHeaders(),
@@ -310,6 +311,7 @@ export async function generateImage(
       ai_image_url: aiImageUrl,
       items,
       preference_text: preferenceText,
+      user_id: userId,
     }),
   })
 
@@ -324,8 +326,10 @@ export async function generateImage(
 /**
  * 生成済み画像メタデータ一覧を取得
  */
-export async function listGeneratedImages(limit = 20): Promise<GeneratedImageMeta[]> {
-  const response = await fetch(`${GENERATE_IMAGE_API_URL}/images?limit=${limit}`, {
+export async function listGeneratedImages(limit = 20, userId?: string): Promise<GeneratedImageMeta[]> {
+  const params = new URLSearchParams({ limit: String(limit) })
+  if (userId) params.set('user_id', userId)
+  const response = await fetch(`${GENERATE_IMAGE_API_URL}/images?${params}`, {
     headers: getHeaders(),
   })
 

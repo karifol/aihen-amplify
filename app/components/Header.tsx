@@ -9,6 +9,7 @@ import { useTheme } from "../lib/theme-context";
 
 const navItems = [
   { label: "Chat",      href: "/chat" },
+  { label: "Chat-V",   href: "/chat-vtuber" },
   { label: "Item",      href: "/item" },
   { label: "Coordinator", href: "/coordinator" },
   { label: "News",      href: "/news" },
@@ -44,7 +45,7 @@ export default function Header() {
 
         <nav className="flex items-center gap-6">
           {navItems.map((item) => {
-            const isActive = pathname.startsWith(item.href);
+            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
               <Link
                 key={item.href}

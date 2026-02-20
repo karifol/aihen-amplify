@@ -16,7 +16,7 @@ async function fetchImageById(id: string): Promise<GeneratedImageMeta | null> {
     if (!res.ok) return null
     const data = await res.json()
     const images: GeneratedImageMeta[] = data.images ?? []
-    return images.find((img) => extractCoordinateId(img.image_url) === id) ?? null
+    return images.find((img) => extractCoordinateId(img.image_key ?? img.image_url ?? '') === id) ?? null
   } catch {
     return null
   }
@@ -46,14 +46,12 @@ export async function generateMetadata({
     openGraph: {
       title,
       description,
-      images: [{ url: item.image_url, width: 900, height: 1600 }],
       type: 'article',
     },
     twitter: {
-      card: 'summary_large_image',
+      card: 'summary',
       title,
       description,
-      images: [item.image_url],
     },
   }
 }

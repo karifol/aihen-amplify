@@ -414,6 +414,7 @@ function StepImageGen({
   avatar,
   selectedItems,
   preferenceText,
+  userId,
   onGenerated,
   onRestart,
   onBack,
@@ -421,6 +422,7 @@ function StepImageGen({
   avatar: Avatar | null
   selectedItems: Record<string, Product>
   preferenceText: string
+  userId?: string
   onGenerated: () => void
   onRestart: () => void
   onBack: () => void
@@ -454,8 +456,9 @@ function StepImageGen({
         items,
         preferenceText,
         avatar?.ai_image_url,
+        userId,
       )
-      setImageUrl(result.image_url)
+      setImageUrl(`/api/generate-image/image?key=${encodeURIComponent(result.image_key)}`)
       setState('done')
       onGenerated()
     } catch (e) {
@@ -719,6 +722,7 @@ export default function CoordinatorPage() {
                 avatar={selectedAvatar}
                 selectedItems={selectedItems}
                 preferenceText={preference}
+                userId={user?.email ?? undefined}
                 onGenerated={() => {}}
                 onRestart={handleRestart}
                 onBack={() => setCurrentStep(3)}

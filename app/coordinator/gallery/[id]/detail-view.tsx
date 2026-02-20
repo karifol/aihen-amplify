@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import type { GeneratedImageMeta } from '../../../lib/types'
+import { coordinateImageSrc } from '../../../lib/types'
 
 export default function DetailView({ item }: { item: GeneratedImageMeta }) {
   const pageUrl = typeof window !== 'undefined' ? window.location.href : ''
@@ -29,7 +30,7 @@ export default function DetailView({ item }: { item: GeneratedImageMeta }) {
         {/* 生成画像 */}
         <div className="w-full max-w-xs shrink-0">
           <img
-            src={item.image_url}
+            src={coordinateImageSrc(item)}
             alt={`${item.avatar_name} コーディネート`}
             className="w-full rounded-xl shadow-lg"
           />
