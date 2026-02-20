@@ -17,8 +17,6 @@ import { extractCoordinateId } from './gallery/utils'
 import { useAuth } from '../lib/auth-context'
 import type { Product } from '../lib/types'
 
-const ALLOWED_EMAIL = 'karigolhorinouchi@gmail.com'
-
 const categoryIcons: Record<string, ReactNode> = {
   Hair:  <GiComb className="text-3xl" />,
   Tops:  <RiTShirt2Line className="text-3xl" />,
@@ -639,7 +637,6 @@ function StepImageGen({
 /* ─── メインページ ─── */
 export default function CoordinatorPage() {
   const { user, isLoading: authLoading } = useAuth()
-  const isAllowed = user?.email === ALLOWED_EMAIL
   const [currentStep, setCurrentStep] = useState(1)
   const [selectedAvatar, setSelectedAvatar] = useState<Avatar | null>(null)
   const [preference, setPreference] = useState('')
@@ -661,19 +658,24 @@ export default function CoordinatorPage() {
 
   return (
     <div className="relative mx-auto max-w-3xl px-6 py-12">
-      {/* 開発中オーバーレイ */}
-      {!authLoading && !isAllowed && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center rounded-2xl bg-white/80 backdrop-blur-sm dark:bg-zinc-950/80">
-          <div className="flex flex-col items-center gap-3">
-            <span className="text-4xl">🚧</span>
-            <p className="text-lg font-bold text-zinc-900 dark:text-zinc-50">開発中</p>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              この機能は現在開発中です
+      {!authLoading && !user && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center rounded-2xl bg-white/70 backdrop-blur-sm dark:bg-zinc-950/70">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+              ログインが必要です
             </p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              この機能を使用するにはログインしてください
+            </p>
+            <Link
+              href="/login"
+              className="rounded-full bg-zinc-900 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
+            >
+              Login
+            </Link>
           </div>
         </div>
       )}
-
       <div className="mb-8 flex items-start justify-between">
         <div>
           <h1 className="flex text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
