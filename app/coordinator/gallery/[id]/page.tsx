@@ -39,6 +39,7 @@ export async function generateMetadata({
     .join(', ')
   const title = `${item.avatar_name} のコーディネート`
   const description = `${item.avatar_name} × ${itemNames}`
+  const ogImageUrl = `https://aihen.jp/api/coordinator-og/${id}`
 
   return {
     title,
@@ -47,11 +48,13 @@ export async function generateMetadata({
       title,
       description,
       type: 'article',
+      images: [{ url: ogImageUrl }],
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title,
       description,
+      images: [ogImageUrl],
     },
   }
 }
