@@ -10,10 +10,10 @@ import { LiaShoePrintsSolid } from 'react-icons/lia'
 import {
   steps,
   categories,
-  mockPreference,
   type Avatar,
 } from './mock-data'
-import { queryItems, generateImage } from '../lib/api-client'
+import { queryItems, generateImage, generatePreference } from '../lib/api-client'
+import { extractCoordinateId } from './gallery/utils'
 import { useAuth } from '../lib/auth-context'
 import type { Product } from '../lib/types'
 
@@ -170,18 +170,27 @@ function StepAvatar({
 function StepPreference({
   value,
   onChange,
+  userId,
 }: {
   value: string
   onChange: (v: string) => void
+  userId?: string
 }) {
   const [generating, setGenerating] = useState(false)
+  const [generateError, setGenerateError] = useState<string | null>(null)
 
-  const handleAutoGenerate = () => {
+  const handleAutoGenerate = async () => {
+    if (!userId) return
     setGenerating(true)
-    setTimeout(() => {
-      onChange(mockPreference)
+    setGenerateError(null)
+    try {
+      const preference = await generatePreference(userId)
+      onChange(preference)
+    } catch (e) {
+      setGenerateError(e instanceof Error ? e.message : '生成に失敗しました')
+    } finally {
       setGenerating(false)
-    }, 1500)
+    }
   }
 
   return (
@@ -203,7 +212,7 @@ function StepPreference({
 
       <button
         onClick={handleAutoGenerate}
-        disabled={generating}
+        disabled={generating || !userId}
         className="mt-3 rounded-full border border-zinc-300 px-5 py-2 text-sm font-medium text-zinc-700 transition-colors hover:cursor-pointer hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
       >
         {generating ? (
@@ -215,6 +224,9 @@ function StepPreference({
           'AIが会話履歴から自動生成'
         )}
       </button>
+      {generateError && (
+        <p className="mt-2 text-xs text-red-500 dark:text-red-400">{generateError}</p>
+      )}
     </div>
   )
 }
@@ -416,7 +428,6 @@ function StepImageGen({
   preferenceText,
   userId,
   onGenerated,
-  onRestart,
   onBack,
 }: {
   avatar: Avatar | null
@@ -424,14 +435,14 @@ function StepImageGen({
   preferenceText: string
   userId?: string
   onGenerated: () => void
-  onRestart: () => void
   onBack: () => void
 }) {
   const shareText = encodeURIComponent(
-    'AIhenのAIコーディネーターでアバターのコーデを提案してもらいました！ #AIhen #VRChat'
+    'AIhenのAIコーディネーター  #AIhen #VRChat'
   )
   const [state, setState] = useState<'idle' | 'generating' | 'done' | 'error'>('idle')
   const [imageUrl, setImageUrl] = useState<string | null>(null)
+  const [galleryUrl, setGalleryUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const itemEntries = Object.entries(selectedItems)
@@ -459,6 +470,8 @@ function StepImageGen({
         userId,
       )
       setImageUrl(`/api/generate-image/image?key=${encodeURIComponent(result.image_key)}`)
+      const coordinateId = extractCoordinateId(result.image_key)
+      setGalleryUrl(`${window.location.origin}/coordinator/gallery/${coordinateId}`)
       setState('done')
       onGenerated()
     } catch (e) {
@@ -598,7 +611,7 @@ function StepImageGen({
       {state === 'done' ? (
         <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <a
-            href={`https://twitter.com/intent/tweet?text=${shareText}`}
+            href={`https://twitter.com/intent/tweet?text=${shareText}${galleryUrl ? `&url=${encodeURIComponent(galleryUrl)}` : ''}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 rounded-full bg-black px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
@@ -608,12 +621,6 @@ function StepImageGen({
             </svg>
             Xでシェア
           </a>
-          <button
-            onClick={onRestart}
-            className="rounded-full border border-zinc-300 px-6 py-3 text-sm font-medium text-zinc-700 transition-colors hover:cursor-pointer hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
-            もう一度試す
-          </button>
         </div>
       ) : state !== 'generating' ? (
         <div className="mt-6">
@@ -650,14 +657,6 @@ export default function CoordinatorPage() {
       default:
         return false
     }
-  }
-
-  const handleRestart = () => {
-    setCurrentStep(1)
-    setSelectedAvatar(null)
-    setPreference('')
-    setItemsSearched(false)
-    setSelectedItems({})
   }
 
   return (
@@ -707,7 +706,7 @@ export default function CoordinatorPage() {
               />
             )}
             {currentStep === 2 && (
-              <StepPreference value={preference} onChange={setPreference} />
+              <StepPreference value={preference} onChange={setPreference} userId={user?.email ?? undefined} />
             )}
             {currentStep === 3 && (
               <StepItems
@@ -724,7 +723,6 @@ export default function CoordinatorPage() {
                 preferenceText={preference}
                 userId={user?.email ?? undefined}
                 onGenerated={() => {}}
-                onRestart={handleRestart}
                 onBack={() => setCurrentStep(3)}
               />
             )}

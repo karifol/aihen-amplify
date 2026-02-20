@@ -5,6 +5,7 @@ const API_URL = '/api/chat'
 const COORDINATOR_API_URL = '/api/coordinator'
 const QUERY_ITEM_API_URL = '/api/query-item'
 const GENERATE_IMAGE_API_URL = '/api/generate-image'
+const GENERATE_PREFERENCE_API_URL = '/api/generate-preference'
 const DEFAULT_USER_ID = 'user_default'
 
 // ストリーミング用: 直接API Gatewayを叩く（Amplifyがバッファリングするため）
@@ -321,6 +322,25 @@ export async function generateImage(
   }
 
   return response.json()
+}
+
+/**
+ * 会話履歴からユーザーの好みテキストを生成
+ */
+export async function generatePreference(userId: string): Promise<string> {
+  const response = await fetch(`${GENERATE_PREFERENCE_API_URL}/generate_preference`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ user_id: userId }),
+  })
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}))
+    throw new Error(data.error || `Generate preference API error: ${response.statusText}`)
+  }
+
+  const data = await response.json()
+  return data.preference as string
 }
 
 /**

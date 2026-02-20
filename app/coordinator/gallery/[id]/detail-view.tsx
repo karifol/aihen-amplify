@@ -1,15 +1,19 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import type { GeneratedImageMeta } from '../../../lib/types'
 import { coordinateImageSrc } from '../../../lib/types'
 
 export default function DetailView({ item }: { item: GeneratedImageMeta }) {
-  const pageUrl = typeof window !== 'undefined' ? window.location.href : ''
+  const [shareUrl, setShareUrl] = useState('')
+  useEffect(() => {
+    setShareUrl(encodeURIComponent(window.location.href))
+  }, [])
+
   const shareText = encodeURIComponent(
-    'AIhenのAIコーディネーターでアバターのコーデを提案してもらいました！ #AIhen #VRChat'
+    'AIhenのAIコーディネーター  #AIhen #VRChat'
   )
-  const shareUrl = encodeURIComponent(pageUrl)
 
   const handleCopyUrl = async () => {
     await navigator.clipboard.writeText(window.location.href)
