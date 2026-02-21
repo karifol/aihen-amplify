@@ -208,20 +208,27 @@ function StepPreference({
         className="w-full resize-none rounded-xl border border-zinc-200 bg-white p-4 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-orange-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder:text-zinc-500"
       />
 
-      <button
-        onClick={handleAutoGenerate}
-        disabled={generating || !userId}
-        className="mt-3 rounded-full border border-zinc-300 px-5 py-2 text-sm font-medium text-zinc-700 transition-colors hover:cursor-pointer hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-      >
-        {generating ? (
-          <span className="flex items-center gap-2">
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900 dark:border-zinc-600 dark:border-t-zinc-50" />
-            生成中...
-          </span>
-        ) : (
-          'AIが会話履歴から自動生成'
-        )}
-      </button>
+      {userId ? (
+        <button
+          onClick={handleAutoGenerate}
+          disabled={generating}
+          className="mt-3 rounded-full border border-zinc-300 px-5 py-2 text-sm font-medium text-zinc-700 transition-colors hover:cursor-pointer hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+        >
+          {generating ? (
+            <span className="flex items-center gap-2">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-900 dark:border-zinc-600 dark:border-t-zinc-50" />
+              生成中...
+            </span>
+          ) : (
+            'AIが会話履歴から自動生成'
+          )}
+        </button>
+      ) : (
+        <p className="mt-3 text-sm text-zinc-400 dark:text-zinc-500">
+          <Link href="/login" className="font-medium text-orange-500 hover:underline dark:text-orange-400">ログイン</Link>
+          {' '}すると会話履歴から自動生成できます
+        </p>
+      )}
       {generateError && (
         <p className="mt-2 text-xs text-red-500 dark:text-red-400">{generateError}</p>
       )}
@@ -658,24 +665,6 @@ export default function CoordinatorPage() {
 
   return (
     <div className="relative mx-auto max-w-3xl px-6 py-12">
-      {!authLoading && !user && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center rounded-2xl bg-white/70 backdrop-blur-sm dark:bg-zinc-950/70">
-          <div className="flex flex-col items-center gap-4 text-center">
-            <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-              ログインが必要です
-            </p>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              この機能を使用するにはログインしてください
-            </p>
-            <Link
-              href="/login"
-              className="rounded-full bg-zinc-900 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-300"
-            >
-              Login
-            </Link>
-          </div>
-        </div>
-      )}
       <div className="mb-8 flex items-start justify-between">
         <div>
           <h1 className="flex text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
@@ -687,12 +676,14 @@ export default function CoordinatorPage() {
             AIがあなたの好みを分析し、Boothのアイテムでコーディネートを提案します
           </p>
         </div>
-        <Link
-          href="/coordinator/gallery"
-          className="shrink-0 rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800"
-        >
-          過去の結果
-        </Link>
+        {user && (
+          <Link
+            href="/coordinator/gallery"
+            className="shrink-0 rounded-full border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-400 dark:hover:bg-zinc-800"
+          >
+            過去の結果
+          </Link>
+        )}
       </div>
 
       <>
