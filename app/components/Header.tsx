@@ -10,7 +10,7 @@ import { useTheme } from "../lib/theme-context";
 const navItems = [
   { label: "Chat",      href: "/chat" },
   // { label: "Chat-V",   href: "/chat-vtuber" },
-  { label: "Item",      href: "/item" },
+  // { label: "Item",      href: "/item" },
   // { label: "Coordinator", href: "/coordinator" },
   { label: "Finder",    href: "/finder" },
   // { label: "News",      href: "/news" },
