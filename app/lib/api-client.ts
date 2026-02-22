@@ -1,8 +1,5 @@
 import { ChatSession, MessageEntry, ToolResult, UsageInfo, QueryItemResponse, GeneratedImageMeta } from './types'
-import type { CoordinatorResult } from '../coordinator/mock-data'
-
 const API_URL = '/api/chat'
-const COORDINATOR_API_URL = '/api/coordinator'
 const QUERY_ITEM_API_URL = '/api/query-item'
 const GENERATE_IMAGE_API_URL = '/api/generate-image'
 const GENERATE_PREFERENCE_API_URL = '/api/generate-preference'
@@ -216,51 +213,6 @@ export async function getUserUsage(userId: string = DEFAULT_USER_ID, sessionId?:
 
   if (!response.ok) {
     throw new Error(`Failed to get usage: ${response.statusText}`)
-  }
-
-  return response.json()
-}
-
-/**
- * コーディネート取得
- * ユーザーの会話履歴からAIが好みを分析し、4カテゴリのアイテムを提案する
- */
-export async function getCoordinate(
-  userId: string = DEFAULT_USER_ID,
-): Promise<CoordinatorResult> {
-  const response = await fetch(`${COORDINATOR_API_URL}/coordinate`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ user_id: userId }),
-  })
-
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}))
-    throw new Error(data.error || `Coordinator API error: ${response.statusText}`)
-  }
-
-  return response.json()
-}
-
-/**
- * 前回のコーディネート結果を取得
- */
-export async function getLatestCoordinate(
-  userId: string = DEFAULT_USER_ID,
-): Promise<{ result: CoordinatorResult | null; generated_today: boolean }> {
-  const response = await fetch(
-    `${COORDINATOR_API_URL}/coordinate?user_id=${encodeURIComponent(userId)}`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    },
-  )
-
-  if (!response.ok) {
-    throw new Error(`Failed to get latest coordinate: ${response.statusText}`)
   }
 
   return response.json()
