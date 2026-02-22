@@ -24,6 +24,8 @@ function getDefaultDate(): string {
   return jst.toISOString().split('T')[0]
 }
 
+const IS_PAUSED = true
+
 export default function ItemPage() {
   const [selectedDate, setSelectedDate] = useState(getDefaultDate())
   const [items, setItems] = useState<ApiItem[]>([])
@@ -71,7 +73,17 @@ export default function ItemPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-3.5rem)] bg-zinc-50 dark:bg-black">
+    <div className="relative min-h-[calc(100vh-3.5rem)] bg-zinc-50 dark:bg-black">
+      {IS_PAUSED && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-4 backdrop-blur-sm bg-white/70 dark:bg-zinc-950/70">
+          <span className="rounded-full bg-zinc-900 px-5 py-1.5 text-xs font-bold tracking-widest text-white dark:bg-zinc-100 dark:text-zinc-900">
+            停止中
+          </span>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            現在このサービスは一時停止しています
+          </p>
+        </div>
+      )}
       <div className="mx-auto max-w-7xl px-6 py-10">
         <h1 className="flex text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
           Daily
