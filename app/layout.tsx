@@ -14,6 +14,8 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const IS_PAUSED = true
+
 const SITE_URL = 'https://aihen.jp'
 
 export const metadata: Metadata = {
@@ -51,6 +53,16 @@ export default function RootLayout({
         <Providers>
           <Header />
           <div className="pt-14">{children}</div>
+          {IS_PAUSED && (
+            <div className="fixed inset-0 z-100 flex flex-col items-center justify-center gap-4 backdrop-blur-sm bg-white/70 dark:bg-zinc-950/70">
+              <span className="rounded-full bg-zinc-900 px-5 py-1.5 text-xs font-bold tracking-widest text-white dark:bg-zinc-100 dark:text-zinc-900">
+                停止中
+              </span>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                現在このサービスは一時停止しています
+              </p>
+            </div>
+          )}
         </Providers>
       </body>
     </html>

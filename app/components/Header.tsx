@@ -11,7 +11,6 @@ const navItems = [
   { label: "Chat",      href: "/chat" },
   // { label: "Chat-V",   href: "/chat-vtuber" },
   // { label: "Coordinator", href: "/coordinator" },
-  { label: "Finder",    href: "/finder" },
   // { label: "News",      href: "/news" },
   { label: "Contact",   href: "/contact" },
 ];
