@@ -641,6 +641,8 @@ function StepImageGen({
   )
 }
 
+const IS_PAUSED = true
+
 /* ─── メインページ ─── */
 export default function CoordinatorPage() {
   const { user, isLoading: authLoading } = useAuth()
@@ -665,6 +667,16 @@ export default function CoordinatorPage() {
 
   return (
     <div className="relative mx-auto max-w-3xl px-6 py-12">
+      {IS_PAUSED && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-4 rounded-2xl backdrop-blur-sm bg-white/70 dark:bg-zinc-950/70">
+          <span className="rounded-full bg-zinc-900 px-5 py-1.5 text-xs font-bold tracking-widest text-white dark:bg-zinc-100 dark:text-zinc-900">
+            停止中
+          </span>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            現在このサービスは一時停止しています
+          </p>
+        </div>
+      )}
       <div className="mb-8 flex items-start justify-between">
         <div>
           <h1 className="flex text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
